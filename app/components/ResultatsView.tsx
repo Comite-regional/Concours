@@ -174,7 +174,7 @@ export default function ResultatsView() {
                                 <tr>
                                   <th className="px-3 py-2 text-left w-10">Pl.</th>
                                   <th className="px-3 py-2 text-left">Archer</th>
-                                  <th className="px-3 py-2 text-left hidden sm:table-cell">Club</th>
+                                  <th className="px-3 py-2 text-left">Club</th>
                                   <th className="px-3 py-2 text-left">Cat.</th>
                                   <th className="px-3 py-2 text-right">S1</th>
                                   <th className="px-3 py-2 text-right">S2</th>
@@ -189,7 +189,7 @@ export default function ResultatsView() {
                                     <tr key={j} className={place <= 3 ? "bg-amber-50/40" : "hover:bg-gray-50/50"}>
                                       <td className="px-3 py-2.5 font-black text-gray-700">{medal ?? place}</td>
                                       <td className="px-3 py-2.5 font-semibold text-gray-900">{p.Nom}</td>
-                                      <td className="px-3 py-2.5 text-gray-500 text-xs hidden sm:table-cell">{p.Club}</td>
+                                      <td className="px-3 py-2.5 text-gray-500 text-xs">{p.Club}</td>
                                       <td className="px-3 py-2.5 text-gray-400 text-xs">{p.Categorie}</td>
                                       <td className="px-3 py-2.5 text-right text-gray-500">{p.SCORE_DIST1 !== "0" ? p.SCORE_DIST1 : "—"}</td>
                                       <td className="px-3 py-2.5 text-right text-gray-500">{p.SCORE_DIST2 !== "0" ? p.SCORE_DIST2 : "—"}</td>

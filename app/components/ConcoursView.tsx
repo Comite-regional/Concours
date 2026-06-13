@@ -4,7 +4,6 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import type { ConcoursBrut } from "@/lib/ffta";
 
-const CalendarView = dynamic(() => import("./CalendarView"), { ssr: false, loading: () => <div className="h-96 flex items-center justify-center text-gray-400">Chargement du calendrier…</div> });
 const MapView = dynamic(() => import("./MapView"), { ssr: false, loading: () => <div className="h-72 flex items-center justify-center text-gray-400">Chargement de la carte…</div> });
 
 // ── Discipline colors ────────────────────────────────────────────────────────
@@ -23,8 +22,28 @@ const DISC_COLORS: Record<string, { bg: string; text: string; badge: string }> =
   "Para-tir à l'arc en extérieur": { bg: "#fde68a", text: "#78350f", badge: "Para" },
 };
 
+// Disciplines regroupées pour le filtre (badge → liste de codes)
+const DISC_GROUPS: Record<string, string[]> = {
+  "Extérieur":  ["Tir à l'Arc Extérieur"],
+  "Salle":      ["Tir en Salle"],
+  "Campagne":   ["Tir en Campagne"],
+  "3D":         ["Tir 3D"],
+  "Nature":     ["Tir Nature"],
+  "Beursault":  ["Tir Beursault"],
+  "Jeunes":     ["Jeunes"],
+  "Loisirs":    ["Loisirs", "Loisirs Confirmé", "Loisirs Débutant", "Loisirs Débutant et confirmé"],
+  "Para":       ["Para-tir à l'arc en extérieur"],
+};
+
 function discStyle(code: string) {
   return DISC_COLORS[code] ?? { bg: "#e2e8f0", text: "#334155", badge: code };
+}
+
+function matchesDiscFilter(disciplineCode: string, filter: string): boolean {
+  if (filter === "Tous") return true;
+  const group = DISC_GROUPS[filter];
+  if (group) return group.includes(disciplineCode);
+  return disciplineCode === filter;
 }
 
 function parseDateFR(s: string): Date | null {
@@ -56,7 +75,7 @@ export default function ConcoursView() {
   const [concours, setConcours] = useState<ConcoursBrut[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "calendar" | "map">("list");
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
 
   // Filters
   const [query, setQuery] = useState("");
@@ -77,9 +96,13 @@ export default function ConcoursView() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Groupes de disciplines présents dans les données
   const disciplines = useMemo(() => {
-    const s = new Set(concours.map((c) => c.DisciplineCode).filter(Boolean));
-    return ["Tous", ...Array.from(s).sort()];
+    const presentCodes = new Set(concours.map((c) => c.DisciplineCode).filter(Boolean));
+    const presentGroups = Object.keys(DISC_GROUPS).filter((badge) =>
+      DISC_GROUPS[badge].some((code) => presentCodes.has(code))
+    );
+    return ["Tous", ...presentGroups];
   }, [concours]);
 
   const depts = useMemo(() => {
@@ -90,7 +113,7 @@ export default function ConcoursView() {
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
     return concours.filter((c) => {
-      if (discFilter !== "Tous" && c.DisciplineCode !== discFilter) return false;
+      if (!matchesDiscFilter(c.DisciplineCode, discFilter)) return false;
       if (deptFilter !== "Tous" && !c.DepartementCode?.startsWith(deptFilter)) return false;
       if (q) {
         const hay = [c.EprvNom, c.EprvLieu, c.AdresseCommune, c.StructureNom, c.DisciplineCode].join(" ").toLowerCase();
@@ -164,7 +187,7 @@ export default function ConcoursView() {
               className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
               {disciplines.map((d) => (
-                <option key={d} value={d}>{d === "Tous" ? "Toutes" : (DISC_COLORS[d]?.badge ?? d)}</option>
+                <option key={d} value={d}>{d === "Tous" ? "Toutes" : d}</option>
               ))}
             </select>
           </div>
@@ -187,13 +210,13 @@ export default function ConcoursView() {
             </button>
           )}
           <div className="ml-auto flex gap-1 bg-gray-100 rounded-xl p-1">
-            {(["list","calendar","map"] as const).map((v) => (
+            {(["list","map"] as const).map((v) => (
               <button
                 key={v}
                 onClick={() => setViewMode(v)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === v ? "bg-white shadow text-blue-700" : "text-gray-500 hover:text-gray-700"}`}
               >
-                {v === "list" ? "Liste" : v === "calendar" ? "Calendrier" : "Carte"}
+                {v === "list" ? "Liste" : "Carte"}
               </button>
             ))}
           </div>
@@ -203,7 +226,6 @@ export default function ConcoursView() {
 
       {/* Views */}
       {viewMode === "list" && <ListView items={filtered} onOpen={setModal} onICS={downloadICS} />}
-      {viewMode === "calendar" && <CalendarView items={filtered} onOpen={setModal} />}
       {viewMode === "map" && <MapView items={filtered} onOpen={setModal} />}
 
       {/* Modal */}
@@ -297,6 +319,13 @@ function ConcoursCard({ c, onOpen, onICS }: { c: ConcoursBrut; onOpen: (c: Conco
               title="Mandat"
               className="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-orange-100 transition-colors text-sm"
             >📄</a>
+          )}
+          {c.ContactsAdresseMail && (
+            <a
+              href={`mailto:${c.ContactsAdresseMail}?subject=Inscription - ${c.EprvNom}`}
+              title="S'inscrire"
+              className="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-green-100 transition-colors text-sm"
+            >✉️</a>
           )}
         </div>
       </div>
