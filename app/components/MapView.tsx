@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ConcoursBrut } from "@/lib/ffta";
 
 const DISC_COLORS: Record<string, string> = {
-  "Tir à l'Arc Extérieur":         "#f3d1ab",
+  "Tir à l'Arc Extérieur":         "#faef00",
   "Tir en Salle":                   "#c9d4ea",
   "Tir en Campagne":                "#1a1a1a",
   "Tir 3D":                         "#e3cdb7",

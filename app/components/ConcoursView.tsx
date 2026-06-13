@@ -8,7 +8,7 @@ const MapView = dynamic(() => import("./MapView"), { ssr: false, loading: () => 
 
 // ── Discipline colors ────────────────────────────────────────────────────────
 const DISC_COLORS: Record<string, { bg: string; text: string; badge: string }> = {
-  "Tir à l'Arc Extérieur":       { bg: "#f3d1ab", text: "#111",    badge: "Extérieur" },
+  "Tir à l'Arc Extérieur":       { bg: "#faef00", text: "#333",    badge: "Extérieur" },
   "Tir en Salle":                 { bg: "#c9d4ea", text: "#0b1b3a", badge: "Salle" },
   "Tir en Campagne":              { bg: "#1a1a1a", text: "#f2c200", badge: "Campagne" },
   "Tir 3D":                       { bg: "#e3cdb7", text: "#3a2414", badge: "3D" },

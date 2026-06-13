@@ -17,7 +17,7 @@ function fmtDate(s: string) {
 }
 
 const DISC_COLORS: Record<string, { bg: string; text: string }> = {
-  "Tir à l'Arc Extérieur":         { bg: "#f3d1ab", text: "#111" },
+  "Tir à l'Arc Extérieur":         { bg: "#faef00", text: "#333" },
   "Tir en Salle":                   { bg: "#c9d4ea", text: "#0b1b3a" },
   "Tir en Campagne":                { bg: "#1a1a1a", text: "#f2c200" },
   "Tir 3D":                         { bg: "#e3cdb7", text: "#3a2414" },
