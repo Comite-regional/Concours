@@ -71,10 +71,11 @@ function decodeHtml(s: string): string {
     .replace(/&gt;/g, ">");
 }
 
-function decodeItem<T extends Record<string, unknown>>(item: T): T {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function decodeItem(item: any): any {
   return Object.fromEntries(
     Object.entries(item).map(([k, v]) => [k, typeof v === "string" ? decodeHtml(v) : v])
-  ) as T;
+  );
 }
 
 function buildQs(params: Record<string, string | number | undefined>): string {
