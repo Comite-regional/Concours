@@ -352,7 +352,7 @@ function ListView({ items, nationaux, onOpen, onICS }: { items: ConcoursBrut[]; 
                 {list.map((c) =>
                   natIds.has(c.EprvId)
                     ? <ChampsNationauxCard key={c.EprvId} c={c} onOpen={onOpen} onICS={onICS} />
-                    : c.EprvChampNiv === "R"
+                    : (c.EprvChampNiv === "R" || /r[eé]gion/i.test(c.EprvNom))
                       ? <ChampsRegionauxCard key={c.EprvId} c={c} onOpen={onOpen} onICS={onICS} />
                       : <ConcoursCard key={c.EprvId} c={c} onOpen={onOpen} onICS={onICS} />
                 )}
