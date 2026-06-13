@@ -36,6 +36,7 @@ export default function ResultatsView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saison, setSaison] = useState(String(new Date().getFullYear()));
+  const [discFilter, setDiscFilter] = useState("Toutes");
   const [open, setOpen] = useState<string | null>(null);
   const [detail, setDetail] = useState<ResultatEpreuve | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -45,6 +46,7 @@ export default function ResultatsView() {
     setError(null);
     setOpen(null);
     setDetail(null);
+    setDiscFilter("Toutes");
     fetch(`/api/ffta/resultats?saison=${saison}`)
       .then((r) => r.json())
       .then((j) => { if (j.ok) setEpreuves(j.data); else setError(j.error); })
@@ -63,6 +65,9 @@ export default function ResultatsView() {
       .finally(() => setDetailLoading(false));
   }
 
+  const disciplines = ["Toutes", ...Array.from(new Set(epreuves.map((e) => e.Discipline).filter(Boolean))).sort()];
+  const filtered = discFilter === "Toutes" ? epreuves : epreuves.filter((e) => e.Discipline === discFilter);
+
   const currentYear = new Date().getFullYear();
   const saisons = Array.from({ length: 5 }, (_, i) => String(currentYear - i));
 
@@ -71,6 +76,16 @@ export default function ResultatsView() {
       {/* Barre de filtres */}
       <div className="bg-white/90 backdrop-blur rounded-2xl shadow border border-white/60 p-4 flex items-center gap-4 flex-wrap">
         <h2 className="font-black text-gray-800 text-lg flex-1">Résultats des épreuves</h2>
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Discipline</label>
+          <select
+            value={discFilter}
+            onChange={(e) => { setDiscFilter(e.target.value); setOpen(null); setDetail(null); }}
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-300"
+          >
+            {disciplines.map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </div>
         <div className="flex items-center gap-2">
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Saison</label>
           <select
@@ -81,7 +96,7 @@ export default function ResultatsView() {
             {saisons.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
-        {!loading && <span className="text-xs text-gray-400">{epreuves.length} épreuve{epreuves.length > 1 ? "s" : ""}</span>}
+        {!loading && <span className="text-xs text-gray-400">{filtered.length} épreuve{filtered.length > 1 ? "s" : ""}{filtered.length !== epreuves.length ? ` sur ${epreuves.length}` : ""}</span>}
       </div>
 
       {error && <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700 text-sm">{error}</div>}
@@ -99,7 +114,7 @@ export default function ResultatsView() {
 
       {/* Cartes épreuves */}
       <div className="space-y-2">
-        {epreuves.map((e) => {
+        {filtered.map((e) => {
           const disc = DISC_COLORS[e.Discipline];
           const isOpen = open === e.EprvId;
           return (
