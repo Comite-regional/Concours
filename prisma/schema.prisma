@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Concours {
+  id          Int          @id @default(autoincrement())
+  nom         String
+  date        DateTime
+  lieu        String
+  discipline  String
+  categorie   String?
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  resultats   Resultat[]
+}
+
+model Athlete {
+  id        Int        @id @default(autoincrement())
+  nom       String
+  prenom    String
+  club      String
+  licence   String?    @unique
+  categorie String
+  createdAt DateTime   @default(now())
+  resultats Resultat[]
+}
+
+model Resultat {
+  id         Int      @id @default(autoincrement())
+  concoursId Int
+  athleteId  Int
+  classement Int?
+  score      Float?
+  serie1     Float?
+  serie2     Float?
+  serie3     Float?
+  total      Float?
+  medaille   String?
+  createdAt  DateTime @default(now())
+  concours   Concours @relation(fields: [concoursId], references: [id], onDelete: Cascade)
+  athlete    Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@unique([concoursId, athleteId])
+}
