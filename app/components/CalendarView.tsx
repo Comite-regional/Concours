@@ -7,24 +7,32 @@ import interactionPlugin from "@fullcalendar/interaction";
 import type { ConcoursBrut } from "@/lib/ffta";
 
 const DISC_COLORS: Record<string, string> = {
-  "Tir à l'Arc Extérieur": "#f3d1ab",
-  "Tir en Salle":           "#c9d4ea",
-  "Tir en Campagne":        "#1a1a1a",
-  "Tir 3D":                 "#e3cdb7",
-  "Tir Nature":             "#d7ddc9",
-  "Tir Beursault":          "#111",
-  "Jeunes":                 "#e2d5ff",
-  "Loisirs":                "#f2c6ea",
+  "Tir à l'Arc Extérieur":         "#f3d1ab",
+  "Tir en Salle":                   "#c9d4ea",
+  "Tir en Campagne":                "#1a1a1a",
+  "Tir 3D":                         "#e3cdb7",
+  "Tir Nature":                     "#d7ddc9",
+  "Tir Beursault":                  "#111",
+  "Jeunes":                         "#e2d5ff",
+  "Loisirs":                        "#f2c6ea",
+  "Loisirs Confirmé":               "#f2c6ea",
+  "Loisirs Débutant":               "#f2c6ea",
+  "Loisirs Débutant et confirmé":   "#f2c6ea",
+  "Para-tir à l'arc en extérieur":  "#fde68a",
 };
 const DISC_TEXT: Record<string, string> = {
-  "Tir à l'Arc Extérieur": "#111",
-  "Tir en Salle":           "#0b1b3a",
-  "Tir en Campagne":        "#f2c200",
-  "Tir 3D":                 "#3a2414",
-  "Tir Nature":             "#2c3b22",
-  "Tir Beursault":          "#fff",
-  "Jeunes":                 "#3a1c6b",
-  "Loisirs":                "#6b004e",
+  "Tir à l'Arc Extérieur":         "#111",
+  "Tir en Salle":                   "#0b1b3a",
+  "Tir en Campagne":                "#f2c200",
+  "Tir 3D":                         "#3a2414",
+  "Tir Nature":                     "#2c3b22",
+  "Tir Beursault":                  "#fff",
+  "Jeunes":                         "#3a1c6b",
+  "Loisirs":                        "#6b004e",
+  "Loisirs Confirmé":               "#6b004e",
+  "Loisirs Débutant":               "#6b004e",
+  "Loisirs Débutant et confirmé":   "#6b004e",
+  "Para-tir à l'arc en extérieur":  "#78350f",
 };
 
 function parseDateFR(s: string): string | null {

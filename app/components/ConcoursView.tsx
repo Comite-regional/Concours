@@ -9,14 +9,18 @@ const MapView = dynamic(() => import("./MapView"), { ssr: false, loading: () => 
 
 // ── Discipline colors ────────────────────────────────────────────────────────
 const DISC_COLORS: Record<string, { bg: string; text: string; badge: string }> = {
-  "Tir à l'Arc Extérieur": { bg: "#f3d1ab", text: "#111", badge: "Extérieur" },
-  "Tir en Salle":           { bg: "#c9d4ea", text: "#0b1b3a", badge: "Salle" },
-  "Tir en Campagne":        { bg: "#1a1a1a", text: "#f2c200", badge: "Campagne" },
-  "Tir 3D":                 { bg: "#e3cdb7", text: "#3a2414", badge: "3D" },
-  "Tir Nature":             { bg: "#d7ddc9", text: "#2c3b22", badge: "Nature" },
-  "Tir Beursault":          { bg: "#111", text: "#fff", badge: "Beursault" },
-  "Jeunes":                 { bg: "#e2d5ff", text: "#3a1c6b", badge: "Jeunes" },
-  "Loisirs":                { bg: "#f2c6ea", text: "#6b004e", badge: "Loisirs" },
+  "Tir à l'Arc Extérieur":       { bg: "#f3d1ab", text: "#111",    badge: "Extérieur" },
+  "Tir en Salle":                 { bg: "#c9d4ea", text: "#0b1b3a", badge: "Salle" },
+  "Tir en Campagne":              { bg: "#1a1a1a", text: "#f2c200", badge: "Campagne" },
+  "Tir 3D":                       { bg: "#e3cdb7", text: "#3a2414", badge: "3D" },
+  "Tir Nature":                   { bg: "#d7ddc9", text: "#2c3b22", badge: "Nature" },
+  "Tir Beursault":                { bg: "#111",    text: "#fff",    badge: "Beursault" },
+  "Jeunes":                       { bg: "#e2d5ff", text: "#3a1c6b", badge: "Jeunes" },
+  "Loisirs":                      { bg: "#f2c6ea", text: "#6b004e", badge: "Loisirs" },
+  "Loisirs Confirmé":             { bg: "#f2c6ea", text: "#6b004e", badge: "Loisirs" },
+  "Loisirs Débutant":             { bg: "#f2c6ea", text: "#6b004e", badge: "Loisirs" },
+  "Loisirs Débutant et confirmé": { bg: "#f2c6ea", text: "#6b004e", badge: "Loisirs" },
+  "Para-tir à l'arc en extérieur": { bg: "#fde68a", text: "#78350f", badge: "Para" },
 };
 
 function discStyle(code: string) {
