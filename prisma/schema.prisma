@@ -4,47 +4,98 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Concours {
-  id          Int          @id @default(autoincrement())
-  nom         String
-  date        DateTime
-  lieu        String
-  discipline  String
-  categorie   String?
-  description String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  resultats   Resultat[]
+  eprvId               String   @id
+  eprvNom              String
+  eprvDateDebut        String
+  eprvDateFin          String
+  eprvLieu             String?
+  eprvEtatCode         String?
+  eprvChampNiv         String?
+  eprvChampionnatType  String?
+  disciplineCode       String?
+  eprvType             String?
+  saisonAnnee          String?
+  ligueCode            String?
+  ligueNom             String?
+  departementCode      String?
+  departementNom       String?
+  structureCode        String?
+  structureNom         String?
+  adresseCodePostal    String?
+  adresseCommune       String?
+  adresseLatitude      String?
+  adresseLongitude     String?
+  contactsMail         String?
+  contactsWeb          String?
+  distinction          String?
+  pdf                  String?
+  syncedAt             DateTime @default(now())
+
+  @@index([saisonAnnee])
+  @@index([disciplineCode])
 }
 
-model Athlete {
-  id        Int        @id @default(autoincrement())
-  nom       String
-  prenom    String
-  club      String
-  licence   String?    @unique
-  categorie String
-  createdAt DateTime   @default(now())
-  resultats Resultat[]
+model EpreuveResultat {
+  eprvId               String   @id
+  eprvNom              String
+  eprvDateDebut        String
+  eprvDateFin          String?
+  eprvLieu             String?
+  eprvEtat             String?
+  discipline           String?
+  eprvType             String?
+  saisonAnnee          String?
+  ligueCode            String?
+  ligueNom             String?
+  departementCode      String?
+  structureNom         String?
+  nbResultats          String?
+  championnatLibelle   String?
+  eprvChampNiv         String?
+  eprvChampionnatType  String?
+  syncedAt             DateTime @default(now())
+  classements          Classement[]
+
+  @@index([saisonAnnee])
 }
 
-model Resultat {
-  id         Int      @id @default(autoincrement())
-  concoursId Int
-  athleteId  Int
-  classement Int?
-  score      Float?
-  serie1     Float?
-  serie2     Float?
-  serie3     Float?
-  total      Float?
-  medaille   String?
-  createdAt  DateTime @default(now())
-  concours   Concours @relation(fields: [concoursId], references: [id], onDelete: Cascade)
-  athlete    Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+model Classement {
+  id               Int      @id @default(autoincrement())
+  eprvId           String
+  libelle          String
+  epreuve          EpreuveResultat @relation(fields: [eprvId], references: [eprvId], onDelete: Cascade)
+  participants     Participant[]
 
-  @@unique([concoursId, athleteId])
+  @@index([eprvId])
+}
+
+model Participant {
+  id            Int        @id @default(autoincrement())
+  classementId  Int
+  nom           String
+  club          String?
+  licenceCode   String?
+  categorie     String?
+  scoreTotal    String?
+  placeQualif   String?
+  placeDef      String?
+  scoreDist1    String?
+  scoreDist2    String?
+  dix           String?
+  neuf          String?
+  classement    Classement @relation(fields: [classementId], references: [id], onDelete: Cascade)
+
+  @@index([classementId])
+}
+
+model SyncLog {
+  id        Int      @id @default(autoincrement())
+  type      String
+  saison    String
+  status    String
+  message   String?
+  createdAt DateTime @default(now())
 }
