@@ -4,8 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import type { ConcoursBrut } from "@/lib/ffta";
 
 const DISC_COLORS: Record<string, string> = {
-  T: "#f3d1ab", S: "#c9d4ea", C: "#1a1a1a", "3": "#e3cdb7",
-  N: "#d7ddc9", B: "#222", J: "#e2d5ff", L: "#f2c6ea",
+  "Tir à l'Arc Extérieur": "#f3d1ab",
+  "Tir en Salle":           "#c9d4ea",
+  "Tir en Campagne":        "#1a1a1a",
+  "Tir 3D":                 "#e3cdb7",
+  "Tir Nature":             "#d7ddc9",
+  "Tir Beursault":          "#222",
+  "Jeunes":                 "#e2d5ff",
+  "Loisirs":                "#f2c6ea",
 };
 
 function parseDateFR(s: string) {

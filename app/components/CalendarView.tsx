@@ -7,12 +7,24 @@ import interactionPlugin from "@fullcalendar/interaction";
 import type { ConcoursBrut } from "@/lib/ffta";
 
 const DISC_COLORS: Record<string, string> = {
-  T: "#f3d1ab", S: "#c9d4ea", C: "#000", "3": "#e3cdb7",
-  N: "#d7ddc9", B: "#111", J: "#e2d5ff", L: "#f2c6ea",
+  "Tir à l'Arc Extérieur": "#f3d1ab",
+  "Tir en Salle":           "#c9d4ea",
+  "Tir en Campagne":        "#1a1a1a",
+  "Tir 3D":                 "#e3cdb7",
+  "Tir Nature":             "#d7ddc9",
+  "Tir Beursault":          "#111",
+  "Jeunes":                 "#e2d5ff",
+  "Loisirs":                "#f2c6ea",
 };
 const DISC_TEXT: Record<string, string> = {
-  T: "#111", S: "#0b1b3a", C: "#f2c200", "3": "#3a2414",
-  N: "#2c3b22", B: "#fff", J: "#3a1c6b", L: "#6b004e",
+  "Tir à l'Arc Extérieur": "#111",
+  "Tir en Salle":           "#0b1b3a",
+  "Tir en Campagne":        "#f2c200",
+  "Tir 3D":                 "#3a2414",
+  "Tir Nature":             "#2c3b22",
+  "Tir Beursault":          "#fff",
+  "Jeunes":                 "#3a1c6b",
+  "Loisirs":                "#6b004e",
 };
 
 function parseDateFR(s: string): string | null {
