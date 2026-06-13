@@ -236,6 +236,51 @@ export default function ConcoursView() {
   );
 }
 
+function ChampsRegionauxCard({ c, onOpen, onICS }: { c: ConcoursBrut; onOpen: (c: ConcoursBrut) => void; onICS: (c: ConcoursBrut) => void }) {
+  const ds = discStyle(c.DisciplineCode);
+  const mandat = getMandat(c);
+  const sameDay = c.EprvDateDebut === c.EprvDateFin || !c.EprvDateFin;
+  const dateStr = sameDay ? fmtDate(c.EprvDateDebut) : `${fmtDate(c.EprvDateDebut)} → ${fmtDate(c.EprvDateFin)}`;
+
+  return (
+    <div
+      onClick={() => onOpen(c)}
+      className="regional-card regional-shimmer relative rounded-2xl cursor-pointer overflow-hidden"
+      style={{ background: "linear-gradient(135deg, #1e1a5e 0%, #353089 50%, #1e1a5e 100%)", border: "2px solid #db2922" }}
+    >
+      {/* Red/blue top accent */}
+      <div style={{ height: 3, background: "linear-gradient(90deg, #db2922, #353089, #db2922, #353089, #db2922)" }} />
+      <div className="p-4 flex items-start gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start gap-2 flex-wrap mb-1.5">
+            <span className="text-xs font-black px-2 py-0.5 rounded-full shrink-0" style={{ background: ds.bg, color: ds.text }}>{ds.badge}</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "#db2922", color: "#fff" }}>🏹 Championnat Régional</span>
+          </div>
+          <h4 className="font-black leading-snug" style={{ color: "#ffffff" }}>{c.EprvNom}</h4>
+          <p className="text-sm mt-0.5" style={{ color: "#a8b4e8" }}>
+            {dateStr}{c.EprvLieu ? ` · ${c.EprvLieu}` : ""}
+            {c.StructureNom ? ` — ${c.StructureNom}` : ""}
+          </p>
+        </div>
+        <div className="flex gap-2 shrink-0 items-center" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => onICS(c)}
+            title="Ajouter au calendrier"
+            className="w-8 h-8 flex items-center justify-center rounded-xl text-sm"
+            style={{ background: "rgba(219,41,34,0.2)", border: "1px solid rgba(219,41,34,0.4)" }}
+          >📅</button>
+          {mandat && (
+            <a href={mandat} target="_blank" rel="noopener" title="Mandat"
+              className="w-8 h-8 flex items-center justify-center rounded-xl text-sm"
+              style={{ background: "rgba(219,41,34,0.2)", border: "1px solid rgba(219,41,34,0.4)" }}
+            >📄</a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── List view ────────────────────────────────────────────────────────────────
 
 function ListView({ items, nationaux, onOpen, onICS }: { items: ConcoursBrut[]; nationaux: ConcoursBrut[]; onOpen: (c: ConcoursBrut) => void; onICS: (c: ConcoursBrut) => void }) {
@@ -264,11 +309,16 @@ function ListView({ items, nationaux, onOpen, onICS }: { items: ConcoursBrut[]; 
           0% { background-position: -400px 0; }
           100% { background-position: 400px 0; }
         }
-        @keyframes glow-border {
+        @keyframes glow-gold {
           0%, 100% { box-shadow: 0 0 8px 2px rgba(250,215,0,0.4), 0 2px 12px rgba(0,0,0,0.15); }
           50% { box-shadow: 0 0 18px 5px rgba(250,215,0,0.7), 0 4px 20px rgba(0,0,0,0.2); }
         }
-        .champ-card { animation: glow-border 2.5s ease-in-out infinite; }
+        @keyframes glow-regional {
+          0%, 100% { box-shadow: 0 0 8px 2px rgba(219,41,34,0.4), 0 2px 12px rgba(53,48,137,0.3); }
+          50% { box-shadow: 0 0 18px 5px rgba(219,41,34,0.65), 0 4px 20px rgba(53,48,137,0.5); }
+        }
+        .champ-card { animation: glow-gold 2.5s ease-in-out infinite; }
+        .regional-card { animation: glow-regional 2.5s ease-in-out infinite; }
         .champ-shimmer::before {
           content: "";
           position: absolute;
@@ -276,6 +326,16 @@ function ListView({ items, nationaux, onOpen, onICS }: { items: ConcoursBrut[]; 
           background: linear-gradient(105deg, transparent 35%, rgba(255,255,220,0.45) 50%, transparent 65%);
           background-size: 400px 100%;
           animation: shimmer 2.8s linear infinite;
+          border-radius: inherit;
+          pointer-events: none;
+        }
+        .regional-shimmer::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(105deg, transparent 35%, rgba(255,200,200,0.25) 50%, transparent 65%);
+          background-size: 400px 100%;
+          animation: shimmer 3s linear infinite;
           border-radius: inherit;
           pointer-events: none;
         }
@@ -292,7 +352,9 @@ function ListView({ items, nationaux, onOpen, onICS }: { items: ConcoursBrut[]; 
                 {list.map((c) =>
                   natIds.has(c.EprvId)
                     ? <ChampsNationauxCard key={c.EprvId} c={c} onOpen={onOpen} onICS={onICS} />
-                    : <ConcoursCard key={c.EprvId} c={c} onOpen={onOpen} onICS={onICS} />
+                    : c.EprvChampNiv === "R"
+                      ? <ChampsRegionauxCard key={c.EprvId} c={c} onOpen={onOpen} onICS={onICS} />
+                      : <ConcoursCard key={c.EprvId} c={c} onOpen={onOpen} onICS={onICS} />
                 )}
               </div>
             </div>
