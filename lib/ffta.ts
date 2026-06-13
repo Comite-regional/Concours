@@ -62,6 +62,21 @@ async function fetchToken(): Promise<string> {
   throw new Error("Impossible d'obtenir un token FFTA");
 }
 
+function decodeHtml(s: string): string {
+  return s
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function decodeItem<T extends Record<string, unknown>>(item: T): T {
+  return Object.fromEntries(
+    Object.entries(item).map(([k, v]) => [k, typeof v === "string" ? decodeHtml(v) : v])
+  ) as T;
+}
+
 function buildQs(params: Record<string, string | number | undefined>): string {
   return Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== "")
@@ -129,7 +144,7 @@ export async function getConcours(saison?: string): Promise<ConcoursBrut[]> {
     const resp = data?.Response ?? data;
     const items: ConcoursBrut[] = resp?.tEpreuves ?? [];
     if (!items.length) break;
-    all.push(...items.filter((e) => e.EprvEtatCode !== "X"));
+    all.push(...items.filter((e) => e.EprvEtatCode !== "X").map(decodeItem));
     const derniere = Number(resp?.DernierePage ?? page);
     if (page >= derniere) break;
     page++;
@@ -183,7 +198,7 @@ export async function getEpreuvesPassees(saison?: string): Promise<EpreuveResult
   if (!res.ok) return [];
   const data = await res.json();
   const resp = data?.Response ?? data;
-  return resp?.EpreuvesArray ?? [];
+  return (resp?.EpreuvesArray ?? []).map(decodeItem);
 }
 
 // ── Résultats détaillés d'une épreuve ───────────────────────────────────────
@@ -236,6 +251,6 @@ export async function getResultatEpreuve(
   if (!res.ok) return null;
   const data = await res.json();
   const resp = data?.Response ?? data;
-  const items = resp?.ResultatsArray ?? [];
+  const items = (resp?.ResultatsArray ?? []).map(decodeItem);
   return items[0] ?? null;
 }
