@@ -154,6 +154,44 @@ export async function getConcours(saison?: string): Promise<ConcoursBrut[]> {
   return all.sort((a, b) => a.EprvDateDebut.localeCompare(b.EprvDateDebut));
 }
 
+export async function getChampsNationaux(saison?: string): Promise<ConcoursBrut[]> {
+  const token = await fetchToken();
+  const today = new Date();
+  const year = saison ?? String(today.getFullYear());
+  const dateFin = `31/12/${year}`;
+  const today_fr = `${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`;
+
+  const all: ConcoursBrut[] = [];
+  let page = 1;
+
+  while (page <= 20) {
+    const qs = buildQs({
+      token,
+      format: "json",
+      ChxNiveauChampionnat: "N",
+      ChxDateDebut: today_fr,
+      ChxDateFin: dateFin,
+      NbParPage: "50",
+      Page: String(page),
+    });
+    const res = await fetch(`${BASE}/ws/rest/Calendrier/GetEpreuves?${qs}`, {
+      headers: HEADERS,
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) break;
+    const data = await res.json();
+    const resp = data?.Response ?? data;
+    const items: ConcoursBrut[] = resp?.tEpreuves ?? [];
+    if (!items.length) break;
+    all.push(...items.filter((e) => e.EprvEtatCode !== "X" && e.EprvChampNiv === "N").map(decodeItem));
+    const derniere = Number(resp?.DernierePage ?? page);
+    if (page >= derniere) break;
+    page++;
+  }
+
+  return all.sort((a, b) => a.EprvDateDebut.localeCompare(b.EprvDateDebut));
+}
+
 // ── Résultats / épreuves passées ────────────────────────────────────────────
 
 export interface EpreuveResultat {

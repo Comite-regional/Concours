@@ -73,6 +73,7 @@ function getMandat(c: ConcoursBrut): string {
 
 export default function ConcoursView() {
   const [concours, setConcours] = useState<ConcoursBrut[]>([]);
+  const [champsNationaux, setChampsNationaux] = useState<ConcoursBrut[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
@@ -86,13 +87,14 @@ export default function ConcoursView() {
   const [modal, setModal] = useState<ConcoursBrut | null>(null);
 
   useEffect(() => {
-    fetch("/api/ffta/concours")
-      .then((r) => r.json())
-      .then((j) => {
-        if (j.ok) setConcours(j.data);
-        else setError(j.error);
-      })
-      .catch((e) => setError(String(e)))
+    Promise.all([
+      fetch("/api/ffta/concours").then((r) => r.json()),
+      fetch("/api/ffta/champsfrance").then((r) => r.json()),
+    ]).then(([jc, jn]) => {
+      if (jc.ok) setConcours(jc.data);
+      else setError(jc.error);
+      if (jn.ok) setChampsNationaux(jn.data);
+    }).catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
   }, []);
 
@@ -225,7 +227,7 @@ export default function ConcoursView() {
       </div>
 
       {/* Views */}
-      {viewMode === "list" && <ListView items={filtered} onOpen={setModal} onICS={downloadICS} />}
+      {viewMode === "list" && <ListView items={filtered} nationaux={champsNationaux} onOpen={setModal} onICS={downloadICS} />}
       {viewMode === "map" && <MapView items={filtered} onOpen={setModal} />}
 
       {/* Modal */}
@@ -236,12 +238,18 @@ export default function ConcoursView() {
 
 // ── List view ────────────────────────────────────────────────────────────────
 
-function ListView({ items, onOpen, onICS }: { items: ConcoursBrut[]; onOpen: (c: ConcoursBrut) => void; onICS: (c: ConcoursBrut) => void }) {
-  if (!items.length) return <div className="text-center py-16 text-gray-400">Aucun concours pour ces filtres.</div>;
+function ListView({ items, nationaux, onOpen, onICS }: { items: ConcoursBrut[]; nationaux: ConcoursBrut[]; onOpen: (c: ConcoursBrut) => void; onICS: (c: ConcoursBrut) => void }) {
+  const natIds = new Set(nationaux.map((c) => c.EprvId));
+
+  // Merge and sort by date
+  const merged = [...items, ...nationaux.filter((c) => !items.some((r) => r.EprvId === c.EprvId))]
+    .sort((a, b) => a.EprvDateDebut.localeCompare(b.EprvDateDebut));
+
+  if (!merged.length) return <div className="text-center py-16 text-gray-400">Aucun concours pour ces filtres.</div>;
 
   // Group by month
   const groups = new Map<string, ConcoursBrut[]>();
-  for (const c of items) {
+  for (const c of merged) {
     const d = parseDateFR(c.EprvDateDebut);
     const key = d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}` : "?";
     if (!groups.has(key)) groups.set(key, []);
@@ -250,20 +258,91 @@ function ListView({ items, onOpen, onICS }: { items: ConcoursBrut[]; onOpen: (c:
   const monthFmt = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
 
   return (
-    <div className="space-y-6">
-      {Array.from(groups.entries()).map(([key, list]) => {
-        const d = parseDateFR(list[0].EprvDateDebut);
-        return (
-          <div key={key}>
-            <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest mb-3 capitalize">
-              {d ? monthFmt.format(d) : key}
-            </h3>
-            <div className="space-y-2">
-              {list.map((c) => <ConcoursCard key={c.EprvId} c={c} onOpen={onOpen} onICS={onICS} />)}
+    <>
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: -400px 0; }
+          100% { background-position: 400px 0; }
+        }
+        @keyframes glow-border {
+          0%, 100% { box-shadow: 0 0 8px 2px rgba(250,215,0,0.4), 0 2px 12px rgba(0,0,0,0.15); }
+          50% { box-shadow: 0 0 18px 5px rgba(250,215,0,0.7), 0 4px 20px rgba(0,0,0,0.2); }
+        }
+        .champ-card { animation: glow-border 2.5s ease-in-out infinite; }
+        .champ-shimmer::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(105deg, transparent 35%, rgba(255,255,220,0.45) 50%, transparent 65%);
+          background-size: 400px 100%;
+          animation: shimmer 2.8s linear infinite;
+          border-radius: inherit;
+          pointer-events: none;
+        }
+      `}</style>
+      <div className="space-y-6">
+        {Array.from(groups.entries()).map(([key, list]) => {
+          const d = parseDateFR(list[0].EprvDateDebut);
+          return (
+            <div key={key}>
+              <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest mb-3 capitalize">
+                {d ? monthFmt.format(d) : key}
+              </h3>
+              <div className="space-y-2">
+                {list.map((c) =>
+                  natIds.has(c.EprvId)
+                    ? <ChampsNationauxCard key={c.EprvId} c={c} onOpen={onOpen} onICS={onICS} />
+                    : <ConcoursCard key={c.EprvId} c={c} onOpen={onOpen} onICS={onICS} />
+                )}
+              </div>
             </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+function ChampsNationauxCard({ c, onOpen, onICS }: { c: ConcoursBrut; onOpen: (c: ConcoursBrut) => void; onICS: (c: ConcoursBrut) => void }) {
+  const ds = discStyle(c.DisciplineCode);
+  const mandat = getMandat(c);
+  const sameDay = c.EprvDateDebut === c.EprvDateFin || !c.EprvDateFin;
+  const dateStr = sameDay ? fmtDate(c.EprvDateDebut) : `${fmtDate(c.EprvDateDebut)} → ${fmtDate(c.EprvDateFin)}`;
+
+  return (
+    <div
+      onClick={() => onOpen(c)}
+      className="champ-card champ-shimmer relative rounded-2xl cursor-pointer overflow-hidden"
+      style={{ background: "linear-gradient(135deg, #1a1200 0%, #3d2e00 50%, #1a1200 100%)", border: "2px solid #f5d600" }}
+    >
+      <div style={{ height: 3, background: "linear-gradient(90deg, #b8860b, #fad700, #fff8c0, #fad700, #b8860b)" }} />
+      <div className="p-4 flex items-start gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start gap-2 flex-wrap mb-1.5">
+            <span className="text-xs font-black px-2 py-0.5 rounded-full shrink-0" style={{ background: ds.bg, color: ds.text }}>{ds.badge}</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "#fad700", color: "#1a1200" }}>🇫🇷 Championnat de France</span>
           </div>
-        );
-      })}
+          <h4 className="font-black text-amber-100 leading-snug">{c.EprvNom}</h4>
+          <p className="text-sm text-amber-300 mt-0.5">
+            {dateStr}{c.EprvLieu ? ` · ${c.EprvLieu}` : ""}
+            {c.StructureNom ? ` — ${c.StructureNom}` : ""}
+          </p>
+        </div>
+        <div className="flex gap-2 shrink-0 items-center" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => onICS(c)}
+            title="Ajouter au calendrier"
+            className="w-8 h-8 flex items-center justify-center rounded-xl text-sm"
+            style={{ background: "rgba(250,215,0,0.15)", border: "1px solid rgba(250,215,0,0.3)" }}
+          >📅</button>
+          {mandat && (
+            <a href={mandat} target="_blank" rel="noopener" title="Mandat"
+              className="w-8 h-8 flex items-center justify-center rounded-xl text-sm"
+              style={{ background: "rgba(250,215,0,0.15)", border: "1px solid rgba(250,215,0,0.3)" }}
+            >📄</a>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
