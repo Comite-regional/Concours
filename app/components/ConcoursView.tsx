@@ -320,7 +320,7 @@ function ConcoursCard({ c, onOpen, onICS }: { c: ConcoursBrut; onOpen: (c: Conco
               className="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-orange-100 transition-colors text-sm"
             >📄</a>
           )}
-          {c.ContactsAdresseMail && (
+          {c.ContactsAdresseMail && c.EprvChampNiv !== "R" && (
             <a
               href={`mailto:${c.ContactsAdresseMail}?subject=Inscription - ${c.EprvNom}`}
               title="S'inscrire"
