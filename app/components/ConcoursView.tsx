@@ -112,18 +112,22 @@ export default function ConcoursView() {
     return ["Tous", ...Array.from(s).sort()];
   }, [concours]);
 
-  const filtered = useMemo(() => {
-    const q = query.toLowerCase();
-    return concours.filter((c) => {
+  const filterItems = useCallback((items: ConcoursBrut[]) => {
+    const tokens = query.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").split(/\s+/).filter(Boolean);
+    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    return items.filter((c) => {
       if (!matchesDiscFilter(c.DisciplineCode, discFilter)) return false;
       if (deptFilter !== "Tous" && !c.DepartementCode?.startsWith(deptFilter)) return false;
-      if (q) {
-        const hay = [c.EprvNom, c.EprvLieu, c.AdresseCommune, c.StructureNom, c.DisciplineCode].join(" ").toLowerCase();
-        if (!hay.includes(q)) return false;
+      if (tokens.length) {
+        const fields = [c.EprvNom, c.EprvLieu, c.AdresseCommune, c.StructureNom, c.DisciplineCode, c.DepartementCode].map((f) => norm(f ?? ""));
+        if (!tokens.every((t) => fields.some((f) => f.includes(t)))) return false;
       }
       return true;
     });
-  }, [concours, query, discFilter, deptFilter]);
+  }, [query, discFilter, deptFilter]);
+
+  const filtered = useMemo(() => filterItems(concours), [concours, filterItems]);
+  const filteredNationaux = useMemo(() => filterItems(champsNationaux), [champsNationaux, filterItems]);
 
   const downloadICS = useCallback((c: ConcoursBrut) => {
     const start = parseDateFR(c.EprvDateDebut);
@@ -223,11 +227,11 @@ export default function ConcoursView() {
             ))}
           </div>
         </div>
-        <p className="text-xs text-gray-400 mt-3">{filtered.length} concours{filtered.length !== concours.length ? ` sur ${concours.length}` : ""}</p>
+        <p className="text-xs text-gray-400 mt-3">{filtered.length + filteredNationaux.length} concours{(filtered.length + filteredNationaux.length) !== (concours.length + champsNationaux.length) ? ` sur ${concours.length + champsNationaux.length}` : ""}</p>
       </div>
 
       {/* Views */}
-      {viewMode === "list" && <ListView items={filtered} nationaux={champsNationaux} onOpen={setModal} onICS={downloadICS} />}
+      {viewMode === "list" && <ListView items={filtered} nationaux={filteredNationaux} onOpen={setModal} onICS={downloadICS} />}
       {viewMode === "map" && <MapView items={filtered} onOpen={setModal} />}
 
       {/* Modal */}
