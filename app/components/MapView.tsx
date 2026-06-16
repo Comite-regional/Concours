@@ -3,20 +3,32 @@
 import { useEffect, useRef, useState } from "react";
 import type { ConcoursBrut } from "@/lib/ffta";
 
-const DISC_COLORS: Record<string, string> = {
-  "Tir à l'Arc Extérieur":         "#faef00",
-  "Tir en Salle":                   "#c9d4ea",
-  "Tir en Campagne":                "#1a1a1a",
-  "Tir 3D":                         "#e3cdb7",
-  "Tir Nature":                     "#d7ddc9",
-  "Tir Beursault":                  "#222",
-  "Jeunes":                         "#e2d5ff",
-  "Loisirs":                        "#f2c6ea",
-  "Loisirs Confirmé":               "#f2c6ea",
-  "Loisirs Débutant":               "#f2c6ea",
-  "Loisirs Débutant et confirmé":   "#f2c6ea",
-  "Para-tir à l'arc en extérieur":  "#fde68a",
+const DISC_COLORS: Record<string, { fill: string; stroke: string; label: string }> = {
+  "Tir à l'Arc Extérieur":         { fill: "#faef00", stroke: "#1e3a5f", label: "Extérieur" },
+  "Tir en Salle":                   { fill: "#c9d4ea", stroke: "#1e3a5f", label: "Salle" },
+  "Tir en Campagne":                { fill: "#1a1a1a", stroke: "#f2c200", label: "Campagne" },
+  "Tir 3D":                         { fill: "#e3cdb7", stroke: "#1e3a5f", label: "3D" },
+  "Tir Nature":                     { fill: "#d7ddc9", stroke: "#1e3a5f", label: "Nature" },
+  "Tir Beursault":                  { fill: "#ffffff", stroke: "#111111", label: "Beursault" },
+  "Jeunes":                         { fill: "#e2d5ff", stroke: "#1e3a5f", label: "Jeunes" },
+  "Loisirs":                        { fill: "#f2c6ea", stroke: "#1e3a5f", label: "Loisirs" },
+  "Loisirs Confirmé":               { fill: "#f2c6ea", stroke: "#1e3a5f", label: "Loisirs" },
+  "Loisirs Débutant":               { fill: "#f2c6ea", stroke: "#1e3a5f", label: "Loisirs" },
+  "Loisirs Débutant et confirmé":   { fill: "#f2c6ea", stroke: "#1e3a5f", label: "Loisirs" },
+  "Para-tir à l'arc en extérieur":  { fill: "#fde68a", stroke: "#1e3a5f", label: "Para" },
 };
+
+const LEGEND = [
+  { fill: "#faef00", stroke: "#1e3a5f", label: "Extérieur" },
+  { fill: "#c9d4ea", stroke: "#1e3a5f", label: "Salle" },
+  { fill: "#1a1a1a", stroke: "#f2c200", label: "Campagne" },
+  { fill: "#e3cdb7", stroke: "#1e3a5f", label: "3D" },
+  { fill: "#d7ddc9", stroke: "#1e3a5f", label: "Nature" },
+  { fill: "#ffffff", stroke: "#111111", label: "Beursault" },
+  { fill: "#e2d5ff", stroke: "#1e3a5f", label: "Jeunes" },
+  { fill: "#f2c6ea", stroke: "#1e3a5f", label: "Loisirs" },
+  { fill: "#fde68a", stroke: "#1e3a5f", label: "Para" },
+];
 
 function parseDateFR(s: string) {
   if (!s) return null;
@@ -101,9 +113,9 @@ export default function MapView({ items, onOpen }: Props) {
       withGps.forEach((c) => {
         const lat = parseFloat(c.AdresseLatitude);
         const lon = parseFloat(c.AdresseLongitude);
-        const color = DISC_COLORS[c.DisciplineCode] ?? "#64748b";
+        const dc = DISC_COLORS[c.DisciplineCode] ?? { fill: "#64748b", stroke: "#1e3a5f" };
         const marker = L.circleMarker([lat, lon], {
-          radius: 8, fillColor: color, color: "#1e3a5f", weight: 2, fillOpacity: 0.9,
+          radius: 8, fillColor: dc.fill, color: dc.stroke, weight: 2, fillOpacity: 0.9,
         });
         const dateStr = c.EprvDateDebut === c.EprvDateFin
           ? fmtDate(c.EprvDateDebut)
@@ -149,6 +161,18 @@ export default function MapView({ items, onOpen }: Props) {
 
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
         <div ref={mapRef} className="w-full rounded-xl overflow-hidden border border-gray-200" style={{ height: 380 }} />
+
+        {/* Légende */}
+        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+          {LEGEND.map((l) => (
+            <div key={l.label} className="flex items-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 14 14">
+                <circle cx="7" cy="7" r="6" fill={l.fill} stroke={l.stroke} strokeWidth="1.5" />
+              </svg>
+              <span className="text-xs text-gray-500">{l.label}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {userPos && nearby.length > 0 && (
