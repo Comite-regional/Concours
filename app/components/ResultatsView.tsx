@@ -37,6 +37,8 @@ export default function ResultatsView() {
   const [error, setError] = useState<string | null>(null);
   const [saison, setSaison] = useState(String(new Date().getFullYear()));
   const [discFilter, setDiscFilter] = useState("Toutes");
+  const [query, setQuery] = useState("");
+  const [deptFilter, setDeptFilter] = useState("Tous");
   const [open, setOpen] = useState<string | null>(null);
   const [detail, setDetail] = useState<ResultatEpreuve | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -47,6 +49,8 @@ export default function ResultatsView() {
     setOpen(null);
     setDetail(null);
     setDiscFilter("Toutes");
+    setQuery("");
+    setDeptFilter("Tous");
     fetch(`/api/ffta/resultats?saison=${saison}`)
       .then((r) => r.json())
       .then((j) => { if (j.ok) setEpreuves(j.data); else setError(j.error); })
@@ -65,8 +69,20 @@ export default function ResultatsView() {
       .finally(() => setDetailLoading(false));
   }
 
+  const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   const disciplines = ["Toutes", ...Array.from(new Set(epreuves.map((e) => e.Discipline).filter(Boolean))).sort()];
-  const filtered = discFilter === "Toutes" ? epreuves : epreuves.filter((e) => e.Discipline === discFilter);
+  const depts = ["Tous", ...Array.from(new Set(epreuves.map((e) => e.DepartementCode?.slice(0, 2)).filter(Boolean))).sort()];
+
+  const tokens = norm(query).split(/\s+/).filter(Boolean);
+  const filtered = epreuves.filter((e) => {
+    if (discFilter !== "Toutes" && e.Discipline !== discFilter) return false;
+    if (deptFilter !== "Tous" && !e.DepartementCode?.startsWith(deptFilter)) return false;
+    if (tokens.length) {
+      const hay = [e.EprvNom, e.EprvLieu, e.StructureNom, e.LigueNom, e.DepartementCode].map((f) => norm(f ?? ""));
+      if (!tokens.every((t) => hay.some((h) => h.includes(t)))) return false;
+    }
+    return true;
+  });
 
   const currentYear = new Date().getFullYear();
   const saisons = Array.from({ length: 5 }, (_, i) => String(currentYear - i));
@@ -74,29 +90,60 @@ export default function ResultatsView() {
   return (
     <div className="space-y-4">
       {/* Barre de filtres */}
-      <div className="bg-white/90 backdrop-blur rounded-2xl shadow border border-white/60 p-4 flex items-center gap-4 flex-wrap">
-        <h2 className="font-black text-gray-800 text-lg flex-1">Résultats des épreuves</h2>
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Discipline</label>
-          <select
-            value={discFilter}
-            onChange={(e) => { setDiscFilter(e.target.value); setOpen(null); setDetail(null); }}
-            className="px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-300"
-          >
-            {disciplines.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
+      <div className="bg-white/90 backdrop-blur rounded-2xl shadow border border-white/60 p-4 space-y-3">
+        <div className="flex flex-wrap gap-3 items-end">
+          <div className="flex-1 min-w-[180px]">
+            <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Recherche</label>
+            <input
+              type="search"
+              placeholder="Épreuve, club, ville…"
+              value={query}
+              onChange={(e) => { setQuery(e.target.value); setOpen(null); setDetail(null); }}
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+            />
+          </div>
+          <div className="min-w-[140px]">
+            <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Discipline</label>
+            <select
+              value={discFilter}
+              onChange={(e) => { setDiscFilter(e.target.value); setOpen(null); setDetail(null); }}
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              {disciplines.map((d) => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
+          <div className="min-w-[110px]">
+            <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Département</label>
+            <select
+              value={deptFilter}
+              onChange={(e) => { setDeptFilter(e.target.value); setOpen(null); setDetail(null); }}
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              {depts.map((d) => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
+          <div className="min-w-[110px]">
+            <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Saison</label>
+            <select
+              value={saison}
+              onChange={(e) => setSaison(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              {saisons.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          {(query || discFilter !== "Toutes" || deptFilter !== "Tous") && (
+            <button
+              onClick={() => { setQuery(""); setDiscFilter("Toutes"); setDeptFilter("Tous"); setOpen(null); setDetail(null); }}
+              className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 text-sm font-semibold hover:bg-gray-200 transition-colors"
+            >
+              Réinitialiser
+            </button>
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Saison</label>
-          <select
-            value={saison}
-            onChange={(e) => setSaison(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-300"
-          >
-            {saisons.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
-        {!loading && <span className="text-xs text-gray-400">{filtered.length} épreuve{filtered.length > 1 ? "s" : ""}{filtered.length !== epreuves.length ? ` sur ${epreuves.length}` : ""}</span>}
+        {!loading && (
+          <p className="text-xs text-gray-400">{filtered.length} épreuve{filtered.length > 1 ? "s" : ""}{filtered.length !== epreuves.length ? ` sur ${epreuves.length}` : ""}</p>
+        )}
       </div>
 
       {error && <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-700 text-sm">{error}</div>}
