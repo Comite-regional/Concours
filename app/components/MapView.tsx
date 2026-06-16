@@ -50,6 +50,7 @@ export default function MapView({ items, onOpen }: Props) {
 
   const [userPos, setUserPos] = useState<[number, number] | null>(null);
   const [radius, setRadius] = useState(50);
+  const [mapReady, setMapReady] = useState(false);
 
   const withGps = items.filter((c) => {
     const lat = parseFloat(c.AdresseLatitude);
@@ -73,17 +74,19 @@ export default function MapView({ items, onOpen }: Props) {
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(map);
       map.setView([47.4, -0.5], 7);
       markersLayerRef.current = L.layerGroup().addTo(map);
+      setMapReady(true);
     });
     return () => {
       leafletRef.current?.remove();
       leafletRef.current = null;
       markersLayerRef.current = null;
+      setMapReady(false);
     };
   }, []);
 
-  // Mise à jour des marqueurs à chaque changement de items
+  // Mise à jour des marqueurs à chaque changement de items ou quand la carte est prête
   useEffect(() => {
-    if (!leafletRef.current || !markersLayerRef.current) return;
+    if (!mapReady || !leafletRef.current || !markersLayerRef.current) return;
     import("leaflet").then((L) => {
       markersLayerRef.current!.clearLayers();
 
@@ -110,7 +113,7 @@ export default function MapView({ items, onOpen }: Props) {
         markersLayerRef.current!.addLayer(marker);
       });
     });
-  }, [withGps.map(c => c.EprvId).join(",")]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mapReady, withGps.map(c => c.EprvId).join(",")]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   function locate() {
     if (!navigator.geolocation) return;
